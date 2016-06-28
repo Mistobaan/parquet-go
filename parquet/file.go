@@ -26,7 +26,7 @@ var (
 func writeHeader(w io.Writer) error {
 	_, err := w.Write(parquetMagic)
 	if err != nil {
-		return fmt.Errorf("codec: header write error: %s", err)
+		return fmt.Errorf("header write error: %s", err)
 	}
 	return nil
 }
@@ -41,18 +41,18 @@ func writeFileMetadata(w io.Writer, meta *thrift.FileMetaData) error {
 	// write metadata
 	n, err := meta.Write(w)
 	if err != nil {
-		return fmt.Errorf("codec: filemetadata write error: %s", err)
+		return fmt.Errorf("filemetadata write error: %s", err)
 	}
 
 	// write metadata size
 	if err := binary.Write(w, binary.LittleEndian, int32(n)); err != nil {
-		return fmt.Errorf("codec: filemetadata size write error: %s", err)
+		return fmt.Errorf("filemetadata size write error: %s", err)
 	}
 
 	// write footer
 	_, err = w.Write(parquetMagic)
 	if err != nil {
-		return fmt.Errorf("codec: footer write error: %s", err)
+		return fmt.Errorf("footer write error: %s", err)
 	}
 
 	return nil

@@ -165,6 +165,9 @@ func (e *defaultEncoder) Close() error {
 		return err
 	}
 
+	e.filemetadata.NumRows = 0
+	e.filemetadata.Schema = e.schema.Elements()
+
 	// Write Metadata
 	err := writeFileMetadata(e, e.filemetadata)
 	if err != nil {

@@ -16,8 +16,5 @@ func init() {
 // read the column metadata
 // read the offset of the column
 func runGenerate(cmd *Command, args []string) error {
-
-	file := parquet.NewFile()
-
 	return nil
 }

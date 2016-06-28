@@ -2,9 +2,12 @@ package main
 
 import (
 	"bytes"
+	"io"
 	"io/ioutil"
+	"log"
 	"math/rand"
 	"os"
+	"os/exec"
 	"testing"
 
 	"github.com/kostya-sh/parquet-go/parquet"
@@ -40,12 +43,15 @@ func TestBooleanColumn(t *testing.T) {
 
 	var b bytes.Buffer
 
-	enc := parquet.NewEncoder(schema, &b)
+	enc := parquet.NewEncoder(schema, parquet.NopCloser(&b))
 
-	values := genBool(100)
-	if err := enc.WriteBool("value", values); err != nil {
-		t.Fatal(err)
-	}
+	// values := genBool(100)
+	// for _, v := range values {
+	// 	record := []map[string]interface{}{{"value": v}}
+	// 	if err := enc.WriteRecords(record); err != nil {
+	// 		t.Fatal(err)
+	// 	}
+	// }
 
 	if err := enc.Close(); err != nil {
 		t.Fatal(err)
@@ -57,22 +63,28 @@ func TestBooleanColumn(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// // launch external implementation
-	// cmd := exec.Command("./parquet_reader", fileName)
-	// stdout, err := cmd.StdoutPipe()
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
+	// launch external implementation
+	cmd := exec.Command("./parquet_reader", fileName)
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	// if err := cmd.Start(); err != nil {
-	// 	t.Fatal(err)
-	// }
+	stderr, err := cmd.StderrPipe()
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	// io.Copy(os.Stdout, stdout)
+	if err := cmd.Start(); err != nil {
+		t.Fatal("cmd.Start", err)
+	}
 
-	// if err := cmd.Wait(); err != nil {
-	// 	log.Fatal(err)
-	// }
+	io.Copy(os.Stdout, stdout)
+	io.Copy(os.Stdout, stderr)
+
+	if err := cmd.Wait(); err != nil {
+		log.Fatal("wait", err)
+	}
 
 	// if err := tmpfile.Close(); err != nil {
 	// 	t.Fatal(err)

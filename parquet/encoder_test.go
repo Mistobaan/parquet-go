@@ -2,7 +2,11 @@ package parquet
 
 import (
 	"bytes"
+	"io"
+	"io/ioutil"
 	"math/rand"
+	"os"
+	"reflect"
 	"testing"
 )
 
@@ -69,7 +73,7 @@ func genbyte(maxsize int, n int) [][]byte {
 	return values
 }
 
-func TestCodec(t *testing.T) {
+func TestEncoder(t *testing.T) {
 	schema := NewSchema()
 	var buff bytes.Buffer
 	schema.AddColumnFromSpec("station: string REQUIRED")
@@ -93,6 +97,35 @@ func TestCodec(t *testing.T) {
 
 	if err := enc.Close(); err != nil {
 		t.Fatal(err)
+	}
+
+	tmpfile, err := ioutil.TempFile("", "parquet.encoder_test")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer os.Remove(tmpfile.Name()) // clean up
+
+	b := buff.Bytes()
+
+	io.Copy(tmpfile, bytes.NewReader(b))
+
+	t.Logf("buffer: %#v", b)
+
+	if err := tmpfile.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	fd, err := OpenFile(tmpfile.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expected := []string{"station", "timestamp", "temperature"}
+	got := fd.schema.Columns()
+
+	if !reflect.DeepEqual(got, expected) {
+		t.Fatal(got, "!=", expected)
 	}
 
 }
